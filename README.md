@@ -1,4 +1,4 @@
-👁️ AI Image Captioning cho Người Khiếm Thị (Mô tả Hình ảnh Thông minh)
+👁️ AI Image Captioning cho Người Khiếm Thị 
 
 Một ứng dụng AI đơn giản, nhân văn nhằm giúp đỡ người khiếm thị "nhìn" thấy thế giới xung quanh thông qua những lời mô tả bằng âm thanh. Dự án sử dụng mô hình Trí tuệ nhân tạo để phân tích hình ảnh đầu vào và tự động chuyển đổi thành một câu mô tả ngắn gọn, dễ hiểu.
 
