@@ -1,3 +1,7 @@
 {
-  "python.defaultInterpreterPath": "/Users/nguyennhan18/Documents/Personal_documents/Project/yolo_env/labelimg_env/bin/python"
+    "python.analysis.extraPaths": [
+        "./backend"
+    ],
+    "python.defaultInterpreterPath": "./backend/venv/bin/python",
+    "python.terminal.activateEnvironment": true
 }
