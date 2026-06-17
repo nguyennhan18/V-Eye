@@ -6,10 +6,10 @@ import 'api_service.dart';
 class TtsService {
   static final TtsService _instance = TtsService._internal();
   factory TtsService() => _instance;
-  
+
   final AudioPlayer _player = AudioPlayer();
   final Queue<String> _queue = Queue<String>();
-  
+
   bool _isSpeaking = false;
   bool _isProcessing = false;
   bool get isSpeaking => _isSpeaking || _queue.isNotEmpty || _isProcessing;
@@ -38,19 +38,18 @@ class TtsService {
   /// Phát file MP3 tiếp theo trong hàng đợi
   Future<void> _playNext() async {
     if (_queue.isEmpty) return;
-    
+
     _isProcessing = true;
     final text = _queue.removeFirst();
-    
+
     try {
       // 1. Gửi request tạo file MP3 lên backend
       final audioUrl = await ApiService.generateAudio(text);
-      
+
       // 2. Phát file URL được trả về
       _isSpeaking = true;
       _isProcessing = false;
       await _player.play(UrlSource(audioUrl));
-      
     } catch (e) {
       // Nếu lỗi tạo âm thanh, bỏ qua và chạy câu tiếp theo
       _isSpeaking = false;

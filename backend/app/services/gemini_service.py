@@ -90,3 +90,33 @@ async def stream_gemini_analysis(image_bytes: bytes, mime_type: str = "image/jpe
     except Exception as e:
         logger.error(f"Lỗi khi stream Gemini: {e}")
         yield f"\n[Lỗi stream AI: {str(e)}]"
+
+async def stream_gemini_chat(image_bytes: bytes, mime_type: str, question: str) -> AsyncGenerator[str, None]:
+    """
+    Hỏi thêm chi tiết về bức ảnh (Follow-up Chat).
+    """
+    client = get_gemini_client()
+    image_part = types.Part.from_bytes(
+        mime_type=mime_type,
+        data=image_bytes,
+    )
+    
+    chat_prompt = f"""
+    Bạn là một trợ lý thông minh cho người khiếm thị. Bạn đang xem bức ảnh này.
+    Người dùng hỏi: "{question}"
+    Hãy trả lời thật ngắn gọn, dễ hiểu, trực tiếp vào câu hỏi, bằng tiếng Việt.
+    Không dùng markdown định dạng phức tạp.
+    """
+    
+    logger.info(f"Bắt đầu stream chat Gemini: {question}")
+    
+    try:
+        async for chunk in await client.aio.models.generate_content_stream(
+            model="gemini-2.5-flash",
+            contents=[image_part, chat_prompt]
+        ):
+            if chunk.text:
+                yield chunk.text
+    except Exception as e:
+        logger.error(f"Lỗi khi stream chat Gemini: {e}")
+        yield f"\n[Lỗi AI: {str(e)}]"

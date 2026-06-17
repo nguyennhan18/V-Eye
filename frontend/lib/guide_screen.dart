@@ -17,19 +17,22 @@ class _GuideScreenState extends State<GuideScreen> {
       'icon': Icons.touch_app,
       'color': const Color(0xFF6C63FF),
       'title': 'Chạm đúp để bắt đầu',
-      'desc': 'Chạm đúp vào bất kỳ đâu trên màn hình để bắt đầu đặt câu hỏi cho AI',
+      'desc':
+          'Chạm đúp vào bất kỳ đâu trên màn hình để bắt đầu đặt câu hỏi cho AI',
     },
     {
       'icon': Icons.mic,
       'color': const Color(0xFFFF3B5C),
       'title': 'Nói câu hỏi của bạn',
-      'desc': 'Sau khi chạm đúp, hãy nói to câu hỏi của bạn. Ví dụ: "Trước mặt tôi có gì?"',
+      'desc':
+          'Sau khi chạm đúp, hãy nói to câu hỏi của bạn. Ví dụ: "Trước mặt tôi có gì?"',
     },
     {
       'icon': Icons.camera_alt,
       'color': const Color(0xFF00C896),
       'title': 'AI phân tích ảnh',
-      'desc': 'App tự động chụp ảnh và gửi lên AI để phân tích. Không cần làm gì thêm!',
+      'desc':
+          'App tự động chụp ảnh và gửi lên AI để phân tích. Không cần làm gì thêm!',
     },
     {
       'icon': Icons.volume_up,
@@ -111,9 +114,11 @@ class _GuideScreenState extends State<GuideScreen> {
                           height: 140,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: (guide['color'] as Color).withOpacity(0.15),
+                            color: (guide['color'] as Color)
+                                .withValues(alpha: 0.15),
                             border: Border.all(
-                              color: (guide['color'] as Color).withOpacity(0.3),
+                              color: (guide['color'] as Color)
+                                  .withValues(alpha: 0.3),
                               width: 2,
                             ),
                           ),
@@ -196,7 +201,7 @@ class _GuideScreenState extends State<GuideScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF6C63FF).withOpacity(0.4),
+                        color: const Color(0xFF6C63FF).withValues(alpha: 0.4),
                         blurRadius: 20,
                         spreadRadius: 2,
                       ),

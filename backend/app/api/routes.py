@@ -2,12 +2,14 @@ import asyncio
 import logging
 import uuid
 import os
-from fastapi import APIRouter, File, UploadFile, HTTPException, Request
+from fastapi import APIRouter, File, UploadFile, HTTPException, Request, Form
 from sse_starlette.sse import EventSourceResponse
 from app.models.schemas import ArtAnalysisResponse, AudioGenerationRequest, AudioGenerationResponse
 from app.utils.helpers import validate_image, hash_image
 from app.utils.cache import image_analysis_cache
+from app.utils.session_store import session_store
 from app.services.vision_service import analyze_image_with_fallback, stream_analysis_with_fallback
+from app.services.gemini_service import stream_gemini_chat
 from app.services.tts_service import generate_audio
 from app.core.config import settings
 
@@ -63,12 +65,15 @@ async def describe_image(image: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/stream-description")
-async def stream_description(request: Request, image: UploadFile = File(...)):
+async def stream_description(request: Request, image: UploadFile = File(...), session_id: str = Form(None)):
     """
     Phân tích ảnh dạng Server-Sent Events (SSE) để tối ưu tốc độ phản hồi.
     """
     try:
         image_bytes = await validate_image(image)
+        
+        if session_id:
+            session_store.set_session(session_id, image_bytes, image.content_type)
         
         async def event_generator():
             try:
@@ -105,6 +110,35 @@ async def stream_description(request: Request, image: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"Lỗi khởi tạo stream: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/chat")
+async def chat_endpoint(request: Request, session_id: str = Form(...), question: str = Form(...)):
+    """
+    Endpoint Chat (Hỏi đáp) dựa trên ảnh đã lưu trong session.
+    """
+    session = session_store.get_session(session_id)
+    if not session:
+        async def err_gen():
+            yield {"event": "error", "data": "Không tìm thấy phiên làm việc. Vui lòng chụp lại ảnh."}
+        return EventSourceResponse(err_gen())
+
+    image_bytes = session["image_bytes"]
+    mime_type = session["mime_type"]
+
+    async def chat_event_generator():
+        try:
+            async for chunk in stream_gemini_chat(image_bytes, mime_type, question):
+                if await request.is_disconnected():
+                    logger.info("Client ngắt kết nối chat stream.")
+                    break
+                yield {"event": "chunk", "data": chunk}
+                await asyncio.sleep(0.01)
+            yield {"event": "complete", "data": "done"}
+        except Exception as e:
+            logger.error(f"Lỗi chat stream: {e}")
+            yield {"event": "error", "data": str(e)}
+
+    return EventSourceResponse(chat_event_generator())
 
 @router.post("/generate-audio", response_model=AudioGenerationResponse)
 async def generate_audio_endpoint(request: AudioGenerationRequest):
