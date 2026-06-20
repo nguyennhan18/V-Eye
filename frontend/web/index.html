@@ -1,0 +1,425 @@
+cd ~/visual_assistant
+cat > web/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual AI</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; color: white; font-family: sans-serif; overflow: hidden; }
+    
+    #camera-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 1;
+    }
+    
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    #overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 2;
+      background: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.5) 0%,
+        transparent 30%,
+        transparent 60%,
+        rgba(0,0,0,0.7) 100%
+      );
+    }
+
+    #top-bar {
+      position: fixed;
+      top: 30px; left: 20px; right: 20px;
+      z-index: 3;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .app-title { font-size: 22px; font-weight: bold; }
+    .app-subtitle { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+    #status-badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(0,255,100,0.5);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #00ff64;
+    }
+
+    #center-ui {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      text-align: center;
+    }
+
+    #frame-box {
+      width: 220px; height: 220px;
+      border: 2px solid rgba(255,255,255,0.7);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    #frame-hint {
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    #mic-circle {
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      background: rgba(255,50,50,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 60px;
+      animation: pulse 0.8s ease-in-out infinite alternate;
+      box-shadow: 0 0 30px rgba(255,50,50,0.5);
+    }
+
+    #processing-circle {
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      background: rgba(255,150,0,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 60px;
+    }
+
+    #speaking-circle {
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      background: rgba(108,99,255,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 60px;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.2); }
+    }
+
+    #result-box {
+      position: fixed;
+      bottom: 100px; left: 20px; right: 20px;
+      z-index: 3;
+      background: rgba(0,0,0,0.85);
+      border-radius: 20px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      display: none;
+    }
+
+    .result-label {
+      background: rgba(108,99,255,0.3);
+      color: #6C63FF;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 4px 10px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    #result-text {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    #status-text {
+      position: fixed;
+      bottom: 40px; left: 0; right: 0;
+      z-index: 3;
+      text-align: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 16px;
+    }
+
+    #canvas { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="camera-container">
+    <video id="video" autoplay playsinline></video>
+  </div>
+  <canvas id="canvas"></canvas>
+  <div id="overlay"></div>
+
+  <div id="top-bar">
+    <div>
+      <div class="app-title">Visual AI</div>
+      <div class="app-subtitle">Trợ lý thị giác thông minh</div>
+    </div>
+    <div id="status-badge">
+      <div id="status-dot"></div>
+      <span id="status-label">Sẵn sàng</span>
+    </div>
+  </div>
+
+  <div id="center-ui">
+    <div id="frame-box">📷</div>
+    <div id="frame-hint">Đưa vật vào khung<br>rồi chạm đúp để chụp</div>
+
+    <div id="mic-circle">🎤</div>
+    <div id="processing-circle">✨</div>
+    <div id="speaking-circle">🔊</div>
+    <div id="listening-hint" style="display:none; color:rgba(255,255,255,0.7); font-size:14px; line-height:1.6;">
+      Nói câu hỏi của bạn<br>VD: "Mô tả thứ này cho tôi"<br><br>
+      <span style="color:rgba(255,255,255,0.4); font-size:12px;">Chạm đúp để dừng sớm</span>
+    </div>
+  </div>
+
+  <div id="result-box">
+    <span class="result-label">✨ AI mô tả</span>
+    <div id="result-text"></div>
+  </div>
+
+  <div id="status-text">Đang khởi động camera...</div>
+
+  <script>
+    // ====== STATE ======
+    let state = 'idle'; // idle | listening | processing | speaking
+    let capturedImageBase64 = null;
+    let recordingTimer = null;
+    let countdown = 5;
+    let countdownInterval = null;
+    let recognition = null;
+    let spokenText = '';
+
+    // ====== ELEMENTS ======
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const statusText = document.getElementById('status-text');
+    const statusLabel = document.getElementById('status-label');
+    const statusDot = document.getElementById('status-dot');
+    const frameBox = document.getElementById('frame-box');
+    const frameHint = document.getElementById('frame-hint');
+    const micCircle = document.getElementById('mic-circle');
+    const processingCircle = document.getElementById('processing-circle');
+    const speakingCircle = document.getElementById('speaking-circle');
+    const listeningHint = document.getElementById('listening-hint');
+    const resultBox = document.getElementById('result-box');
+    const resultText = document.getElementById('result-text');
+
+    // ====== CAMERA ======
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        video.srcObject = stream;
+        setStatus('idle', 'Chạm đúp để chụp ảnh');
+      } catch (e) {
+        setStatus('idle', 'Lỗi camera: ' + e.message);
+      }
+    }
+
+    // ====== CHỤP ẢNH ======
+    function capturePhoto() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      capturedImageBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    }
+
+    // ====== TTS ======
+    function speak(text, onEnd) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'vi-VN';
+      utter.rate = 0.9;
+      utter.onend = onEnd || null;
+      speechSynthesis.speak(utter);
+    }
+
+    // ====== SPEECH TO TEXT ======
+    function startListening() {
+  spokenText = '';
+  console.log('Bắt đầu nghe...');
+
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    console.error('Trình duyệt không hỗ trợ Speech Recognition');
+    return;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'vi-VN';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    console.log('Speech recognition đã bắt đầu');
+  };
+
+  recognition.onresult = (e) => {
+    spokenText = Array.from(e.results).map(r => r[0].transcript).join('');
+    console.log('Nghe được:', spokenText);
+  };
+
+  recognition.onerror = (e) => {
+    console.error('Lỗi speech recognition:', e.error);
+  };
+
+  recognition.onend = () => {
+    console.log('Speech recognition đã dừng. Text cuối cùng:', spokenText);
+  };
+
+  try {
+    recognition.start();
+  } catch (e) {
+    console.error('Không thể bắt đầu recognition:', e);
+  }
+}
+
+    function stopListening() {
+      if (recognition) recognition.stop();
+    }
+
+    // ====== SET UI STATE ======
+    function setStatus(newState, text) {
+      state = newState;
+      statusText.textContent = text;
+
+      frameBox.style.display = 'none';
+      frameHint.style.display = 'none';
+      micCircle.style.display = 'none';
+      processingCircle.style.display = 'none';
+      speakingCircle.style.display = 'none';
+      listeningHint.style.display = 'none';
+
+      if (newState === 'idle') {
+        frameBox.style.display = 'flex';
+        frameHint.style.display = 'block';
+        statusDot.style.background = '#00ff64';
+        statusLabel.textContent = 'Sẵn sàng';
+      } else if (newState === 'listening') {
+        micCircle.style.display = 'flex';
+        listeningHint.style.display = 'block';
+        statusDot.style.background = '#ff3232';
+        statusLabel.textContent = 'Đang nghe';
+      } else if (newState === 'processing') {
+        processingCircle.style.display = 'flex';
+        statusDot.style.background = '#ff9500';
+        statusLabel.textContent = 'Đang xử lý';
+      } else if (newState === 'speaking') {
+        speakingCircle.style.display = 'flex';
+        statusDot.style.background = '#6C63FF';
+        statusLabel.textContent = 'Đang đọc';
+      }
+    }
+
+    // ====== PROCESS & SEND ======
+    async function processAndSend() {
+      clearInterval(countdownInterval);
+      stopListening();
+      setStatus('processing', 'Đang gửi lên AI...');
+      resultBox.style.display = 'none';
+
+      const question = spokenText || 'Hãy mô tả những gì bạn thấy trong ảnh này';
+
+      try {
+        // TODO: Thay URL này bằng URL server của Nhẫn
+        const response = await fetch('http://localhost:8000/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: capturedImageBase64,
+            question: question
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          showResult(data.result || 'Không có kết quả');
+        } else {
+          throw new Error('Server lỗi');
+        }
+      } catch (e) {
+        // Giả lập khi chưa có server
+        showResult('Đây là kết quả giả lập. Khi kết nối với AI thật, nó sẽ mô tả chi tiết những gì trong ảnh!');
+      }
+    }
+
+    function showResult(text) {
+      resultText.textContent = text;
+      resultBox.style.display = 'block';
+      setStatus('speaking', 'Đang đọc kết quả...');
+      speak(text, () => {
+        setStatus('idle', 'Chạm đúp để chụp ảnh mới');
+      });
+    }
+
+    // ====== DOUBLE TAP ======
+    let lastTap = 0;
+    document.addEventListener('click', (e) => {
+      const now = Date.now();
+      const diff = now - lastTap;
+      if (diff < 400 && diff > 0) {
+        onDoubleTap();
+      }
+      lastTap = now;
+    });
+
+    function onDoubleTap() {
+      if (state === 'idle') {
+        // Chụp ảnh → chuyển sang ghi âm
+        capturePhoto();
+        setStatus('listening', 'Đang nghe... (5 giây)');
+        startListening();
+        speak('Hãy nói câu hỏi của bạn');
+
+        countdown = 5;
+        countdownInterval = setInterval(() => {
+          countdown--;
+          statusText.textContent = `Đang nghe... (${countdown} giây)`;
+          if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            processAndSend();
+          }
+        }, 1000);
+
+      } else if (state === 'listening') {
+        // Dừng sớm
+        clearInterval(countdownInterval);
+        processAndSend();
+      }
+    }
+
+    // ====== INIT ======
+    startCamera();
+  </script>
+</body>
+</html>
+EOF
