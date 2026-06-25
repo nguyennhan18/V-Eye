@@ -128,48 +128,27 @@
 
             <!-- Middle Row -->
             <div class="middle-grid">
-                <div class="card analysis-card">
+                <div class="card analysis-card" style="grid-column: span 2;">
                     <div class="card-header">
-                        <h3>Phân tích ảnh mới nhất</h3>
+                        <h3>Lịch sử Phân tích ảnh mới nhất</h3>
                         <a href="#" class="view-all">Xem tất cả <span class="material-symbols-rounded">arrow_forward</span></a>
                     </div>
-                    <div class="analysis-content">
-                        <div class="analysis-image">
-                            <!-- Placeholder image representing street -->
-                            <img src="https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?auto=format&fit=crop&w=400&q=80" alt="Street view">
-                        </div>
-                        <div class="analysis-details">
-                            <div class="ai-header">
-                                <div class="ai-title"><span class="material-symbols-rounded">smart_toy</span> Mô tả AI</div>
-                                <div class="confidence">Độ tin cậy: 92%</div>
-                            </div>
-                            <p class="ai-text">
-                                Đây là một ngã tư đường phố có vạch qua đường dành cho người đi bộ. 
-                                Phía trước có xe buýt màu xanh đang dừng đỗ. Bên phải có nhiều xe máy và người đi bộ. 
-                                Cần chú ý khi băng qua đường.
-                            </p>
-                            <div class="tags">
-                                <span class="tag">Đường phố</span>
-                                <span class="tag">Ngã tư</span>
-                                <span class="tag">Xe buýt</span>
-                                <span class="tag">Người đi bộ</span>
-                                <span class="tag">Vạch qua đường</span>
-                                <span class="tag">Cây xanh</span>
-                            </div>
-                            <div class="audio-player">
-                                <button class="play-btn"><span class="material-symbols-rounded">play_arrow</span></button>
-                                <div class="waveform">
-                                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                                </div>
-                                <span class="time">0:18</span>
-                            </div>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table-container" style="width: 100%; border-collapse: collapse; text-align: left; color: #F3F4F6;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: #9CA3AF;">
+                                    <th style="padding: 12px;">Ảnh / File</th>
+                                    <th style="padding: 12px;">AI Model</th>
+                                    <th style="padding: 12px;">Thời gian</th>
+                                    <th style="padding: 12px;">Nội dung AI</th>
+                                    <th style="padding: 12px;">Tốc độ</th>
+                                    <th style="padding: 12px;">Phát âm</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dữ liệu từ API sẽ được chèn vào đây -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 

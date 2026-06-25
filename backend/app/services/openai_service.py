@@ -62,26 +62,21 @@ async def stream_openai_analysis(image_bytes: bytes, mime_type: str = "image/jpe
     
     logger.info("Bắt đầu stream ảnh đến OpenAI GPT-4o...")
     
-    try:
-        stream = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": VISION_PROMPT},
-                        {"type": "image_url", "image_url": {"url": image_url}}
-                    ]
-                }
-            ],
-            max_tokens=1000,
-            stream=True
-        )
-        
-        async for chunk in stream:
-            if chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
-                
-    except Exception as e:
-        logger.error(f"Lỗi khi stream OpenAI: {e}")
-        yield f"\n[Lỗi stream AI: {str(e)}]"
+    stream = await client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": VISION_PROMPT},
+                    {"type": "image_url", "image_url": {"url": image_url}}
+                ]
+            }
+        ],
+        max_tokens=1000,
+        stream=True
+    )
+    
+    async for chunk in stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            yield chunk.choices[0].delta.content

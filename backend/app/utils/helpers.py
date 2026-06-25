@@ -52,8 +52,7 @@ def parse_ai_json(text: str) -> dict:
     if start_index == -1 or end_index == -1:
         logger.warning("Không tìm thấy JSON hợp lệ trong phản hồi AI. Trả về text thô.")
         return {
-            "tang_1": cleaned_text[:100],  # Lấy 100 ký tự đầu làm định danh tạm
-            "tang_2": cleaned_text
+            "description": cleaned_text
         }
 
     json_text = cleaned_text[start_index:end_index + 1]
@@ -64,6 +63,5 @@ def parse_ai_json(text: str) -> dict:
     except json.JSONDecodeError as e:
         logger.error(f"Lỗi parse JSON: {e}")
         return {
-            "tang_1": "Lỗi parse dữ liệu",
-            "tang_2": cleaned_text
+            "description": cleaned_text
         }

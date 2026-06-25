@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     
     # Thư mục lưu trữ
-    UPLOAD_DIR: Path = BASE_DIR / "uploads"
+    DATASET_DIR: Path = BASE_DIR / "dataset"
     AUDIO_DIR: Path = BASE_DIR / "audio"
     LOG_DIR: Path = BASE_DIR / "logs"
 
@@ -21,6 +21,6 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Đảm bảo thư mục tồn tại
-settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+settings.DATASET_DIR.mkdir(parents=True, exist_ok=True)
 settings.AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 settings.LOG_DIR.mkdir(parents=True, exist_ok=True)

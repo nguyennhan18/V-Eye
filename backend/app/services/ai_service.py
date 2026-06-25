@@ -25,18 +25,14 @@ async def analyze_art_with_gemini(image_bytes: bytes, content_type: str | None) 
     model_name = "gemini-2.5-flash"
 
     prompt = """
-            Bạn là trợ lý mô tả tranh nghệ thuật dành cho người khiếm thị.
-
-            Hãy phân tích bức tranh trong ảnh và trả lời BẮT BUỘC bằng JSON hợp lệ.
-            Không dùng markdown. Không bọc trong ```json.
+            Bạn là trợ lý cho người khiếm thị.
+            Đây KHÔNG PHẢI là kết quả giả lập. Hãy chứng minh khả năng AI của bạn bằng cách mô tả thật CHI TIẾT, sống động và tự nhiên bức tranh/khung cảnh trong ảnh này có những gì (màu sắc, ánh sáng, bố cục, các vật thể và ý nghĩa nếu có).
+            BẮT BUỘC trả về bằng định dạng JSON hợp lệ. Không dùng markdown, không bọc trong ```json.
 
             Schema bắt buộc:
             {
-            "tang_1": "Thông tin định danh nhanh: tên tác phẩm, họa sĩ, niên đại, trường phái. Tối đa 2 câu.",
-            "tang_2": "Mô tả thị giác nghệ thuật: bố cục, màu sắc, nét cọ, cảm xúc, thông điệp hoặc bối cảnh văn hóa."
+                "description": "Nội dung mô tả chi tiết bức tranh..."
             }
-
-            Nếu không nhận diện chắc chắn tên tranh, vẫn mô tả những gì nhìn thấy và ghi rõ là chưa chắc chắn.
             """
     image_part = types.Part.from_bytes(
         mime_type=content_type or "image/jpeg",

@@ -13,27 +13,27 @@ def get_gemini_client():
         raise ValueError("GEMINI_API_KEY is not configured")
     return genai.Client(api_key=settings.GEMINI_API_KEY)
 
-# Prompt chung cho phân tích ảnh
 VISION_PROMPT = """
-Bạn là trợ lý mô tả tranh nghệ thuật dành cho người khiếm thị.
-Hãy phân tích bức tranh trong ảnh và trả lời BẮT BUỘC bằng JSON hợp lệ.
-Không dùng markdown. Không bọc trong ```json.
+Bạn đang mô tả hình ảnh cho một người khiếm thị hoàn toàn, người không có khái niệm thị giác trước đó hoặc đã mất thị lực. Mục tiêu là giúp họ dựng lại hình ảnh trong tâm trí một cách chính xác và hữu ích, KHÔNG phải để "cảm nhận nghệ thuật" mà để HIỂU và AN TOÀN khi cần.
 
-Schema bắt buộc:
+Hãy mô tả theo cấu trúc sau:
+1. Câu mở đầu ngắn: nêu loại ảnh và nội dung chính trong 1 câu.
+2. Bố cục không gian: mô tả từ tổng quan đến chi tiết, theo thứ tự gần → xa hoặc trái → phải, nêu rõ vị trí, khoảng cách tương đối của các vật thể.
+3. Chi tiết quan trọng cho an toàn/tương tác: vật cản, bậc thang, biển báo, người, phương tiện — ưu tiên nêu trước nếu liên quan đến di chuyển.
+4. Màu sắc & ánh sáng: chỉ gọi tên rõ ràng khi có ý nghĩa thông tin (đèn đỏ, biển báo).
+5. Văn bản trong ảnh: đọc nguyên văn nếu có.
+
+Nguyên tắc viết QUAN TRỌNG:
+- CHỈ MÔ TẢ NHỮNG GÌ CÓ TRONG ẢNH. Tuyệt đối KHÔNG nhắc đến những thứ không tồn tại.
+- Ví dụ: Nếu ảnh không có chữ, KHÔNG ĐƯỢC nói "Trong ảnh không có văn bản". Nếu ảnh an toàn, KHÔNG ĐƯỢC nói "Không có vật cản nguy hiểm". Cứ việc bỏ qua và không nhắc tới.
+- Câu ngắn, rõ, không dùng ẩn dụ thị giác mơ hồ.
+- Ưu tiên thông tin hữu ích cho ra quyết định/di chuyển.
+- Độ dài: 2-4 câu cho mô tả nhanh.
+
+BẮT BUỘC trả về bằng định dạng JSON hợp lệ:
 {
-"scene": "Mô tả tổng quát khung cảnh. Tối đa 2 câu.",
-"objects": ["đối tượng 1", "đối tượng 2"],
-"colors": ["màu 1", "màu 2"],
-"positions": "Vị trí tương đối của các vật thể.",
-"warnings": ["cảnh báo 1", "cảnh báo 2"],
-"confidence": 0.95,
-"tang_1": "Thông tin định danh nhanh: tên tác phẩm, họa sĩ, niên đại, trường phái. Tối đa 2 câu.",
-"tang_2": "Mô tả thị giác nghệ thuật: bố cục, màu sắc, nét cọ, cảm xúc, thông điệp hoặc bối cảnh văn hóa."
+    "description": "Câu mô tả theo cấu trúc trên..."
 }
-
-Lưu ý:
-- warnings: Các yếu tố có thể gây nguy hiểm (ví dụ: xe cộ, lửa) nếu đây là ảnh đời thực, hoặc mảng màu chói gắt. Nếu không có gì nguy hiểm, trả về danh sách rỗng [].
-- Nếu không nhận diện chắc chắn tên tranh (tang_1), vẫn mô tả những gì nhìn thấy và ghi rõ là chưa chắc chắn.
 """
 
 async def analyze_with_gemini(image_bytes: bytes, mime_type: str = "image/jpeg") -> str:
@@ -79,17 +79,13 @@ async def stream_gemini_analysis(image_bytes: bytes, mime_type: str = "image/jpe
     
     logger.info("Bắt đầu stream ảnh đến Gemini...")
     
-    try:
-        # Dùng async generator để yield dữ liệu realtime
-        async for chunk in await client.aio.models.generate_content_stream(
-            model="gemini-2.5-flash",
-            contents=[VISION_PROMPT, image_part]
-        ):
-            if chunk.text:
-                yield chunk.text
-    except Exception as e:
-        logger.error(f"Lỗi khi stream Gemini: {e}")
-        yield f"\n[Lỗi stream AI: {str(e)}]"
+    # Dùng async generator để yield dữ liệu realtime
+    async for chunk in await client.aio.models.generate_content_stream(
+        model="gemini-2.5-flash",
+        contents=[VISION_PROMPT, image_part]
+    ):
+        if chunk.text:
+            yield chunk.text
 
 async def stream_gemini_chat(image_bytes: bytes, mime_type: str, question: str) -> AsyncGenerator[str, None]:
     """

@@ -7,7 +7,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.api.routes import router
-from app.core.config import settings
+from app.core.config import settings, BASE_DIR
 
 # Cấu hình logging
 logging.basicConfig(
@@ -53,6 +53,13 @@ app.add_middleware(
 
 # Phục vụ file audio tĩnh
 app.mount("/audio", StaticFiles(directory=str(settings.AUDIO_DIR)), name="audio")
+
+# Phục vụ file dataset (ảnh)
+app.mount("/dataset", StaticFiles(directory=str(settings.DATASET_DIR)), name="dataset")
+
+# Phục vụ Admin Dashboard
+admin_dir = BASE_DIR.parent / "admin_dashboard"
+app.mount("/admin", StaticFiles(directory=str(admin_dir), html=True), name="admin")
 
 app.include_router(router, prefix="/api")
 

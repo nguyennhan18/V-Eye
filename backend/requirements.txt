@@ -9,3 +9,4 @@ python-multipart==0.0.9
 gtts
 sse-starlette
 slowapi
+aiofiles==23.2.1

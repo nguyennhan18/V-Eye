@@ -50,8 +50,47 @@ async def describe_image(image: UploadFile = File(...)):
             logger.info("Cache hit! Trả về kết quả từ cache.")
             return cached_result
             
+        import time
+        from app.core.database import add_log, get_stats, get_latest_logs
+        import aiofiles
+        import datetime
+        
+        start_time = time.time()
+        
+        # Lưu file ảnh gốc vào DATASET_DIR
+        timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        ext = ".jpg"
+        if image.content_type == "image/png": ext = ".png"
+        saved_filename = f"img_{timestamp_str}_{uuid.uuid4().hex[:6]}{ext}"
+        saved_filepath = settings.DATASET_DIR / saved_filename
+        
+        async with aiofiles.open(saved_filepath, 'wb') as out_file:
+            await out_file.write(image_bytes)
+        
         # Phân tích
         result = await analyze_image_with_fallback(image_bytes, image.content_type)
+        
+        # Tự động sinh audio ngay lập tức
+        try:
+            audio_path, _ = await generate_audio(result.description)
+            filename = os.path.basename(audio_path)
+            result.audio_url = f"/audio/{filename}"
+        except Exception as audio_err:
+            logger.error(f"Lỗi khi sinh audio tự động: {audio_err}")
+            # Nếu lỗi sinh âm thanh, vẫn trả về text (không crash)
+            result.audio_url = None
+        
+        end_time = time.time()
+        processing_time_ms = int((end_time - start_time) * 1000)
+        
+        # Lưu vào Database
+        add_log(
+            image_filename=saved_filename,
+            description=result.description,
+            audio_url=result.audio_url or "",
+            processing_time_ms=processing_time_ms,
+            provider=result.provider
+        )
         
         # Lưu cache
         image_analysis_cache.set(img_hash, result)
@@ -63,6 +102,16 @@ async def describe_image(image: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"Lỗi describe-image: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/dashboard/stats")
+async def dashboard_stats():
+    from app.core.database import get_stats
+    return get_stats()
+
+@router.get("/dashboard/history")
+async def dashboard_history():
+    from app.core.database import get_latest_logs
+    return get_latest_logs(50)
 
 @router.post("/stream-description")
 async def stream_description(request: Request, image: UploadFile = File(...), session_id: str = Form(None)):
