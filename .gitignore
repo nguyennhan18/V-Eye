@@ -1,15 +1,57 @@
-# Python
+# ============================================================
+# V-Eye Project — .gitignore
+# ============================================================
+
+# --- macOS ---
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- Python ---
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# Env
-.env
 .venv/
 venv/
-labelimg_env/
+*.egg-info/
 
-# Logs
-*.log
+# --- Environment variables (API keys) ---
+.env
+backend/.env
+
+# --- Backend: Runtime-generated files ---
+backend/audio/*.mp3
+backend/audio/*.wav
+backend/dataset/*.jpg
+backend/dataset/*.jpeg
+backend/dataset/*.png
+backend/dataset/*.webp
+backend/dataset/*.db
+backend/logs/*.log
+backend/uploads/*
+!backend/audio/.gitkeep
+!backend/dataset/.gitkeep
+!backend/logs/.gitkeep
+!backend/uploads/.gitkeep
+
+# --- Flutter: Build output ---
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.metadata
+frontend/.packages
+
+# --- Flutter: Platform-specific (not needed for Web) ---
+frontend/android/
+frontend/ios/
+frontend/macos/
+frontend/windows/
+frontend/linux/
+
+# --- IDE ---
+.vscode/settings.json
+.idea/
+*.iml
 
