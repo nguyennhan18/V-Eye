@@ -42,6 +42,7 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> {
   CameraController? _cameraController;
+  // khoi tao doi tuong phat am thanh
   final AudioPlayer _audioPlayer = AudioPlayer();
   
   bool _isProcessing = false;
